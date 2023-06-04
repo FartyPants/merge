@@ -1,7 +1,7 @@
 # merge
-Extension for oobabooga web ui to merge Base model with Lora
+Very simple Extension for oobabooga web ui to merge Base model with Lora
 
-(simple - can merge only half float HF with LORA, so no 4-nit, or 8 bit)
+(can merge only half float HF with LORA, so no 4-nit, or 8 bit)
 
 adds Merge tab, allows loading HF model and merging with LORA
 
@@ -19,4 +19,5 @@ device_map={'': 0}
 TODO:
 - See if the GPU can be somehow optimized (??)
 - merge 4 bit GPTQ with LORA (no idea how)
+- some feedback in interface
 
