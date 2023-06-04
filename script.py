@@ -60,7 +60,7 @@ def process_merge(model_name, peft_model_name, output_dir):
             torch_dtype=torch.float16,
             device_map={'': 0})    
     except Exception as e:
-        print(f"Error in AutoModelForCausalLM: {e}")
+        print(f"\033[91mError in AutoModelForCausalLM: \033[0;37;0m\n {e}" )
         print(f"Merge failed")
         return
     
@@ -68,7 +68,7 @@ def process_merge(model_name, peft_model_name, output_dir):
     try:
         model = PeftModel.from_pretrained(base_model, peft_model_path, torch_dtype=torch.float16, device_map={'': 0})
     except Exception as e:
-        print(f"Error initializing PeftModel: {e}")
+        print(f"\033[91mError initializing PeftModel:  \033[0;37;0m\n{e}")
         print(f"Merge failed")
         return
 
@@ -77,7 +77,7 @@ def process_merge(model_name, peft_model_name, output_dir):
     try:
         tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path)
     except Exception as e:
-        print(f"Error in AutoTokenizer: {e}")
+        print(f"\033[91mError in AutoTokenizer:  \033[0;37;0m\n{e}")
         print(f"Merge failed")
         return
     model.save_pretrained(f"{output_dir}")
