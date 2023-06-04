@@ -15,3 +15,7 @@ device map is set as:
 device_map={'': 0}
 
 
+TODO:
+- See if the GPU can be somehow optimized (??)
+- merge 4 bit GPTQ with LORA (no idea how)
+
