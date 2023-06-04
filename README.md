@@ -1,7 +1,7 @@
 # merge
 Very simple Extension for oobabooga web ui to merge Base model with Lora
 
-(can merge only half float HF with LORA, so no 4-nit, or 8 bit)
+(can merge only half float HF with LORA, so no 4 bit, or 8 bit)
 
 adds Merge tab, allows loading HF model and merging with LORA
 
