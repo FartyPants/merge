@@ -2,6 +2,7 @@ from pathlib import Path
 import gradio as gr
 from modules import utils
 from modules import shared
+from modules.models import unload_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from pathlib import Path
@@ -47,23 +48,38 @@ def process_merge(model_name, peft_model_name, output_dir):
     base_model_name_or_path = Path(f'{shared.args.model_dir}/{model_name}')
     peft_model_path = Path(f'{shared.args.lora_dir}/{peft_model_name}')
     device_arg = { 'device_map': 'auto' }
-    print(f"Loading base model: {base_model_name_or_path}")
-    base_model = AutoModelForCausalLM.from_pretrained(
-        base_model_name_or_path,
-        return_dict=True,
-        torch_dtype=torch.float16,
-        device_map={'': 0})    
+    print(f"Unloading model")
+    unload_model()
 
+    print(f"Loading base model: {base_model_name_or_path}")
+  
+    try:
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_name_or_path,
+            return_dict=True,
+            torch_dtype=torch.float16,
+            device_map={'': 0})    
+    except Exception as e:
+        print(f"Error in AutoModelForCausalLM: {e}")
+        print(f"Merge failed")
+        return
+    
     print(f"Loading PEFT: {peft_model_path}")
     try:
         model = PeftModel.from_pretrained(base_model, peft_model_path, torch_dtype=torch.float16, device_map={'': 0})
     except Exception as e:
         print(f"Error initializing PeftModel: {e}")
+        print(f"Merge failed")
         return
 
     print(f"Running merge_and_unload - WAIT untill you see the Model saved message")
     model = model.merge_and_unload()
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path)
+    except Exception as e:
+        print(f"Error in AutoTokenizer: {e}")
+        print(f"Merge failed")
+        return
     model.save_pretrained(f"{output_dir}")
     tokenizer.save_pretrained(f"{output_dir}")
     print(f"Model saved to {output_dir}")
