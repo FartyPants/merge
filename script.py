@@ -7,6 +7,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from pathlib import Path
 import torch
+import math
+import os
 
 params = {
     "display_name": "Merge",
@@ -85,6 +87,31 @@ def process_merge(model_name, peft_model_name, output_dir):
     print(f"Model saved to {output_dir}")
     print(f"**** DONE ****")
 
+def clean_path(base_path: str, path: str):
+    """Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
+    # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
+    # Or swap it to a strict whitelist of [a-zA-Z_0-9]
+    path = path.replace('\\', '/').replace('..', '_')
+    if base_path is None:
+        return path
+
+    return f'{Path(base_path).absolute()}/{path}'
+
+
+
+def estimate_proc(raw_text_file, micro_batch_size,batch_size,cutoff_len,overlap_len,steps):
+    
+    epochs = 1
+    if raw_text_file not in ['None', '']:
+        file_path = clean_path('training/datasets', f'{raw_text_file}.txt')
+        file_size = os.path.getsize(file_path)
+        #print(f"bytecount {file_size}")
+     
+        # this is really just made to fit the situation, it's bad math, but I'm too tired
+        # one day....
+        epochs =  math.ceil((steps * (128/micro_batch_size) * (cutoff_len - overlap_len)) / ((2.62144 * file_size)))
+    
+    return str(epochs)
 
 def ui():
     model_name = "None"
@@ -105,4 +132,27 @@ def ui():
 
         output_dir = gr.Textbox(label='Output Dir', info='The folder name of your merge (relative to text-generation-webui)')
         gr_apply = gr.Button(value='Do Merge')    
-        gr_apply.click(process_merge, inputs=[gr_modelmenu, gr_loramenu,output_dir])        
+        gr_apply.click(process_merge, inputs=[gr_modelmenu, gr_loramenu,output_dir])
+
+    with gr.Accordion("LORA Training Epoch Estimator for plaintext (half-assed)", open=False):
+        with gr.Row():
+            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.')
+            create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
+
+        with gr.Row():
+            micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size.')
+            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size.', interactive=False )
+        
+
+        with gr.Row():
+            cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input.')
+            overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length')
+
+        with gr.Row():
+            steps = gr.Slider(label='Desired Max Training steps (around 1500-2000 is usually decent)', minimum=500, maximum=8000, value=2000, step=100, info='Max Steps')
+        with gr.Row():
+            estimate = gr.Button("Estimate Epochs")
+            result = gr.Textbox(label='Epochs to hit Max Steps', value='', info='Estimate number of epochs needed to reach the Max Steps')
+       
+        estimate.click(estimate_proc, inputs=[raw_text_file, micro_batch_size,batch_size, cutoff_len,overlap_len,steps], outputs=result)        
+
