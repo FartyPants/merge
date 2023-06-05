@@ -99,7 +99,7 @@ def clean_path(base_path: str, path: str):
 
 
 
-def estimate_proc(raw_text_file, micro_batch_size,batch_size,cutoff_len,overlap_len,steps):
+def estimate_proc(raw_text_file, micro_batch_size,batch_size,steps):
     
     epochs = 1
     if raw_text_file not in ['None', '']:
@@ -109,6 +109,9 @@ def estimate_proc(raw_text_file, micro_batch_size,batch_size,cutoff_len,overlap_
      
         # this is really just made to fit the situation, it's bad math, but I'm too tired
         # one day....
+        cutoff_len = 256
+        overlap_len = 128
+        #epochs = math.ceil((steps * micro_batch_size * (cutoff_len - overlap_len)) / (0.3333333 * file_size))
         epochs =  math.ceil((steps * (128/micro_batch_size) * (cutoff_len - overlap_len)) / ((2.62144 * file_size)))
     
     return str(epochs)
@@ -144,9 +147,9 @@ def ui():
             batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size.', interactive=False )
         
 
-        with gr.Row():
-            cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input.')
-            overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length')
+        #with gr.Row():
+        #    cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input.')
+        #    overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length')
 
         with gr.Row():
             steps = gr.Slider(label='Desired Max Training steps (around 1500-2000 is usually decent)', minimum=500, maximum=8000, value=2000, step=100, info='Max Steps')
@@ -154,5 +157,5 @@ def ui():
             estimate = gr.Button("Estimate Epochs")
             result = gr.Textbox(label='Epochs to hit Max Steps', value='', info='Estimate number of epochs needed to reach the Max Steps')
        
-        estimate.click(estimate_proc, inputs=[raw_text_file, micro_batch_size,batch_size, cutoff_len,overlap_len,steps], outputs=result)        
+        estimate.click(estimate_proc, inputs=[raw_text_file, micro_batch_size,batch_size, steps], outputs=result)        
 
