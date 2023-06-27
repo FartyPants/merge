@@ -1,3 +1,7 @@
+
+this project has been updated here:
+https://github.com/FartyPants/merge_quant_cpu
+
 # merge
 Very simple Extension for oobabooga web ui to merge Base model with Lora
 
