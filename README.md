@@ -1,5 +1,6 @@
 
-this project has been updated here:
+this project has been updated here (merge and quantize using CPU):
+
 https://github.com/FartyPants/merge_quant_cpu
 
 # merge
